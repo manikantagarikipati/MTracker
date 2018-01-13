@@ -18,6 +18,7 @@
 
     <activity
       android:label="@string/title_activity_maps"
+      android:theme="@style/AppTheme.NoActionBar"
       android:name=".map.MapsActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -27,18 +28,18 @@
     </activity>
 
     <service
+      android:exported="true"
       android:name=".tracker.TrackerService"
-      android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"
-      android:exported="true">
+      android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE">
       <intent-filter>
         <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY" />
       </intent-filter>
     </service>
 
     <receiver
-      android:name=".tracker.TrackerBroadcastReceiver"
       android:enabled="true"
-      android:exported="true">
+      android:exported="true"
+      android:name=".tracker.TrackerBroadcastReceiver">
       <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
       </intent-filter>

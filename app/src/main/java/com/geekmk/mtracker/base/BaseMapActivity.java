@@ -6,9 +6,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import com.geekmk.mtracker.R;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import java.util.Map;
  * Created by manikanta.garikipati on 11/01/18.
  */
 
-public class BaseMapActivity extends FragmentActivity {
+public class BaseMapActivity extends AppCompatActivity {
 
   public static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 1;
 
