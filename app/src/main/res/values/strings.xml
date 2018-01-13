@@ -11,5 +11,7 @@
   <string name="msg_service_destroyed">Tracking Service Stopped</string>
   <string name="msg_tracking_started">Location Tracking Started</string>
   <string name="msg_tracking_suspended">Connection suspended</string>
+  <string name="prefs">userPref</string>
+  <string name="val_current_journey">currentJrny</string>
 
 </resources>

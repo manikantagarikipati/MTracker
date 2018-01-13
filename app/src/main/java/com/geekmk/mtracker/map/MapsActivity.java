@@ -14,8 +14,9 @@ import android.util.Log;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
-import com.geekmk.mtracker.constants.AppConstants;
-import com.geekmk.mtracker.constants.AppUtils;
+import com.geekmk.mtracker.helper.AppConstants;
+import com.geekmk.mtracker.helper.AppPreferences;
+import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.tracker.TrackerService;
 import com.geekmk.mtracker.tracker.TrackerService.LocalBinder;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -97,6 +98,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     super.onStop();
     if (mBound) {
       unbindService(mConnection);
+      mBound = false;
     }
   }
 
@@ -198,4 +200,11 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     stopService(new Intent(this, TrackerService.class));
   }
 
+  @Override
+  protected void onDestroy() {
+    if (AppPreferences.getCurrentJourneyId(this) == 0) {
+      stopLocationService();
+    }
+    super.onDestroy();
+  }
 }

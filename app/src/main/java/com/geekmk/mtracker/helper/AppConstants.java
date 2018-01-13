@@ -1,4 +1,4 @@
-package com.geekmk.mtracker.constants;
+package com.geekmk.mtracker.helper;
 
 /**
  * Created by manikanta.garikipati on 13/01/18.

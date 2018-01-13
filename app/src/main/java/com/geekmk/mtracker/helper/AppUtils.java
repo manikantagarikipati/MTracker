@@ -1,4 +1,4 @@
-package com.geekmk.mtracker.constants;
+package com.geekmk.mtracker.helper;
 
 import android.app.ActivityManager;
 import android.content.Context;
