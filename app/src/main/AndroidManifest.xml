@@ -25,6 +25,25 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+
+    <service
+      android:name=".tracker.TrackerService"
+      android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY" />
+      </intent-filter>
+    </service>
+
+    <receiver
+      android:name=".tracker.TrackerBroadcastReceiver"
+      android:enabled="true"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+
   </application>
 
 </manifest>

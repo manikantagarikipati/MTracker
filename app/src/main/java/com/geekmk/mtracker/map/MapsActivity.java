@@ -1,18 +1,23 @@
 package com.geekmk.mtracker.map;
 
-import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
+import com.geekmk.mtracker.constants.AppConstants;
+import com.geekmk.mtracker.constants.AppUtils;
+import com.geekmk.mtracker.tracker.TrackerService;
+import com.geekmk.mtracker.tracker.TrackerService.LocalBinder;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -23,17 +28,15 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
-    GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener,
     MapPermissionsProvidedCB {
 
   private GoogleMap mMap;
 
-  private GoogleApiClient mGoogleApiClient;
-
-  private com.google.android.gms.location.LocationRequest mLocationRequest;
-  ;
   private Marker mCurrLocationMarker;
+
+  private boolean registerReceiver;
+
+  private boolean mBound = false;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -58,58 +61,78 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   @Override
   public void onMapReady(GoogleMap googleMap) {
     mMap = googleMap;
-    if (MapsActivity.super.checkLocationRequestPermissions()) {
-      mMap.setMyLocationEnabled(true);
-      startLocationTracking();
+    if (AppUtils.isServiceRunning(TrackerService.class, this)) {
+      // If service already running, simply update UI.
+      //todo get the current journey and plot markers on map
+      bindToTrackerService();
+    } else {
+      // First time running - check for inputs pre-populated from build.
+      if (MapsActivity.super.checkLocationRequestPermissions()) {
+        startLocationService();
+      }
     }
   }
+
+  private void bindToTrackerService() {
+    Intent intent = new Intent(this, TrackerService.class);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+  }
+
 
   @Override
   protected void onPause() {
     super.onPause();
-//    if(mGoogleApiClient!=null){
-//      LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient,this);
-//    }
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    LocalBroadcastManager.getInstance(this)
+        .registerReceiver(mMessageReceiver, new IntentFilter(AppConstants.LOCATION_INTENT));
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+    if (mBound) {
+      unbindService(mConnection);
+    }
   }
 
   /**
-   * Starts location tracking by creating a Google API client, and
-   * requesting location updates.
+   * Defines callbacks for service binding, passed to bindService()
    */
-  @SuppressLint("MissingPermission")
-  private void startLocationTracking() {
-    mGoogleApiClient = new GoogleApiClient.Builder(this)
-        .addConnectionCallbacks(mLocationRequestCallback)
-        .addApi(LocationServices.API)
-        .build();
-    mGoogleApiClient.connect();
-  }
+  private ServiceConnection mConnection = new ServiceConnection() {
 
-  private GoogleApiClient.ConnectionCallbacks mLocationRequestCallback = new GoogleApiClient
-      .ConnectionCallbacks() {
-
-    @SuppressLint("MissingPermission")
     @Override
-    public void onConnected(Bundle bundle) {
-      displayCurrentLocationMarker(LocationServices.
-          FusedLocationApi.getLastLocation(mGoogleApiClient));
-      mLocationRequest = new LocationRequest();
-      mLocationRequest.setInterval(1000);
-      mLocationRequest.setFastestInterval(1000);
-      mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-      LocationServices.FusedLocationApi
-          .requestLocationUpdates(mGoogleApiClient, mLocationRequest,
-              new com.google.android.gms.location.LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                  displayCurrentLocationMarker(location);
-                }
-              });
+    public void onServiceConnected(ComponentName className,
+        IBinder service) {
+      mBound = true;
+      // We've bound to LocalService, cast the IBinder and get LocalService instance
+      LocalBinder binder = (LocalBinder) service;
+      TrackerService trackerService = binder.getService();
+      if (trackerService.getCurrentLocation() != null) {
+        displayCurrentLocationMarker(trackerService.getCurrentLocation());
+      }
     }
 
     @Override
-    public void onConnectionSuspended(int reason) {
-      // TODO: Handle gracefully
+    public void onServiceDisconnected(ComponentName arg0) {
+      mBound = false;
+    }
+  };
+
+  /**
+   * Receives location info from the tracking service.
+   */
+  private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent != null && intent.getExtras() != null) {
+        displayCurrentLocationMarker(
+            (Location) intent.getExtras().getParcelable(AppConstants.EXTRA_CUR_LOC));
+      }
     }
   };
 
@@ -122,27 +145,11 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     MarkerOptions markerOptions = new MarkerOptions();
     markerOptions.position(latLng);
     markerOptions.title("You!!");
-    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
     mCurrLocationMarker = mMap.addMarker(markerOptions);
 
     //move map camera
     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11));
-  }
-
-
-  @Override
-  public void onConnected(@Nullable Bundle bundle) {
-
-  }
-
-  @Override
-  public void onConnectionSuspended(int i) {
-
-  }
-
-  @Override
-  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
   }
 
   @Override
@@ -154,7 +161,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
         boolean isPermissionsAdded = MapsActivity.super
             .checkLocationRequestProvidedStatus(permissions, grantResults);
         if (isPermissionsAdded) {
-          startLocationTracking();
+          startLocationService();
         } else {
           MapsActivity.super.handleLocationPermissionCallBack(this);
         }
@@ -164,11 +171,31 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   @Override
   public void onMapPermissionsProvided() {
-    startLocationTracking();
+    startLocationService();
   }
 
   @Override
   public void onMapPermissionsDenied() {
     Log.e("Location Tracking", "Permissions denied");
   }
+
+  private void startLocationService() {
+//    // Before we start the service, confirm that we have extra power usage privileges.
+//    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+//    Intent intent = new Intent();
+//    if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
+//      intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+//      intent.setData(Uri.parse("package:" + getPackageName()));
+//      startActivity(intent);
+//    }
+    startService(new Intent(this, TrackerService.class));
+  }
+
+  private void stopLocationService() {
+    if (mBound) {
+      unbindService(mConnection);
+    }
+    stopService(new Intent(this, TrackerService.class));
+  }
+
 }

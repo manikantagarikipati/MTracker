@@ -7,5 +7,9 @@
   <string name="yes">Yes</string>
   <string name="ok">OK</string>
   <string name="msg_nav_app_settings">You need to give some mandatory permissions to continue. Do you want to go to app settings?</string>
+  <string name="msg_service_started">Tracking Service Initiated</string>
+  <string name="msg_service_destroyed">Tracking Service Stopped</string>
+  <string name="msg_tracking_started">Location Tracking Started</string>
+  <string name="msg_tracking_suspended">Connection suspended</string>
 
 </resources>
