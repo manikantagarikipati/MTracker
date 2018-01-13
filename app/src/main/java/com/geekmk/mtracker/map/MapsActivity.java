@@ -115,7 +115,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     // Get the action view used in your toggleservice item
     final MenuItem toggle = menu.findItem(R.id.menu_switch);
     mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
-    setSwitchStatus(mSwitch);
     mSwitch.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -126,6 +125,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
         }
       }
     });
+    setSwitchStatus(mSwitch);
     return super.onCreateOptionsMenu(menu);
   }
 
