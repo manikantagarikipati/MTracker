@@ -1,5 +1,6 @@
 package com.geekmk.mtracker.map;
 
+import android.arch.lifecycle.Observer;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.geekmk.mtracker.R;
@@ -16,7 +18,6 @@ import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
 import com.geekmk.mtracker.helper.AppConstants;
 import com.geekmk.mtracker.helper.AppPreferences;
-import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.tracker.TrackerService;
 import com.geekmk.mtracker.tracker.TrackerService.LocalBinder;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,9 +36,8 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   private Marker mCurrLocationMarker;
 
-  private boolean registerReceiver;
-
   private boolean mBound = false;
+
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -49,81 +49,27 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     mapFragment.getMapAsync(this);
   }
 
-
-  /**
-   * Manipulates the map once available.
-   * This callback is triggered when the map is ready to be used.
-   * This is where we can add markers or lines, add listeners or move the camera. In this case,
-   * we just add a marker near Sydney, Australia.
-   * If Google Play services is not installed on the device, the user will be prompted to install
-   * it inside the SupportMapFragment. This method will only be triggered once the user has
-   * installed Google Play services and returned to the app.
-   */
   @Override
   public void onMapReady(GoogleMap googleMap) {
     mMap = googleMap;
-    if (AppUtils.isServiceRunning(TrackerService.class, this)) {
-      // If service already running, simply update UI.
-      //todo get the current journey and plot markers on map
-      bindToTrackerService();
-    } else {
-      // First time running - check for inputs pre-populated from build.
+//    if (AppUtils.isServiceRunning(TrackerService.class, this)) {
+//      // If service already running, simply update UI.
+//      //todo get the current journey and plot markers on map
+////      bindToTrackerService();
+//
+//    } else {
       if (MapsActivity.super.checkLocationRequestPermissions()) {
-        startLocationService();
-      }
+        LocationLiveData.getInstance(getApplicationContext()).observe(this,
+            new Observer<Location>() {
+              @Override
+              public void onChanged(@Nullable Location location) {
+                displayCurrentLocationMarker(location);
+              }
+            });
+//        startLocationService();
+//      }
     }
   }
-
-  private void bindToTrackerService() {
-    Intent intent = new Intent(this, TrackerService.class);
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-  }
-
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-    LocalBroadcastManager.getInstance(this)
-        .registerReceiver(mMessageReceiver, new IntentFilter(AppConstants.LOCATION_INTENT));
-  }
-
-  @Override
-  protected void onStop() {
-    super.onStop();
-    if (mBound) {
-      unbindService(mConnection);
-      mBound = false;
-    }
-  }
-
-  /**
-   * Defines callbacks for service binding, passed to bindService()
-   */
-  private ServiceConnection mConnection = new ServiceConnection() {
-
-    @Override
-    public void onServiceConnected(ComponentName className,
-        IBinder service) {
-      mBound = true;
-      // We've bound to LocalService, cast the IBinder and get LocalService instance
-      LocalBinder binder = (LocalBinder) service;
-      TrackerService trackerService = binder.getService();
-      if (trackerService.getCurrentLocation() != null) {
-        displayCurrentLocationMarker(trackerService.getCurrentLocation());
-      }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-      mBound = false;
-    }
-  };
 
   /**
    * Receives location info from the tracking service.
@@ -158,7 +104,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   public void onRequestPermissionsResult(int requestCode, String[] permissions,
       int[] grantResults) {
     switch (requestCode) {
-      default:
       case BaseMapActivity.REQUEST_ID_MULTIPLE_PERMISSIONS:
         boolean isPermissionsAdded = MapsActivity.super
             .checkLocationRequestProvidedStatus(permissions, grantResults);
@@ -167,6 +112,8 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
         } else {
           MapsActivity.super.handleLocationPermissionCallBack(this);
         }
+        break;
+      default:
         break;
     }
   }
@@ -182,15 +129,19 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   }
 
   private void startLocationService() {
-//    // Before we start the service, confirm that we have extra power usage privileges.
-//    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-//    Intent intent = new Intent();
-//    if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
-//      intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-//      intent.setData(Uri.parse("package:" + getPackageName()));
-//      startActivity(intent);
-//    }
-    startService(new Intent(this, TrackerService.class));
+
+//    locationViewModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+//
+//    // Create the observer which updates the UI.
+//    locationViewModel.getCurrentLocation().observe(this, new Observer<LocationLiveData>() {
+//      @Override
+//      public void onChanged(@Nullable LocationLiveData locationLiveData) {
+//        if(locationLiveData!=null)
+//        displayCurrentLocationMarker(locationLiveData.getValue());
+//      }
+//    });
+
+//    startService(new Intent(this, TrackerService.class));
   }
 
   private void stopLocationService() {
@@ -198,6 +149,57 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       unbindService(mConnection);
     }
     stopService(new Intent(this, TrackerService.class));
+  }
+
+  /**
+   * Defines callbacks for service binding, passed to bindService()
+   */
+  private ServiceConnection mConnection = new ServiceConnection() {
+
+    @Override
+    public void onServiceConnected(ComponentName className,
+        IBinder service) {
+      mBound = true;
+      // We've bound to LocalService, cast the IBinder and get LocalService instance
+      LocalBinder binder = (LocalBinder) service;
+      TrackerService trackerService = binder.getService();
+      if (trackerService.getCurrentLocation() != null) {
+        displayCurrentLocationMarker(trackerService.getCurrentLocation());
+      }
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      mBound = false;
+    }
+  };
+
+
+  private void bindToTrackerService() {
+    Intent intent = new Intent(this, TrackerService.class);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    LocalBroadcastManager.getInstance(this)
+        .registerReceiver(mMessageReceiver, new IntentFilter(AppConstants.LOCATION_INTENT));
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+    if (mBound) {
+      unbindService(mConnection);
+      mBound = false;
+    }
   }
 
   @Override
