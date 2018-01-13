@@ -15,6 +15,7 @@ import android.view.View.OnClickListener;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
+import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.tracker.TrackerService;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -32,6 +33,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   private Marker mCurrLocationMarker;
   private SwitchCompat mSwitch;
+  private SwitchCompat switchStatus;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +115,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     // Get the action view used in your toggleservice item
     final MenuItem toggle = menu.findItem(R.id.menu_switch);
     mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
+    setSwitchStatus(mSwitch);
     mSwitch.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -124,5 +127,11 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       }
     });
     return super.onCreateOptionsMenu(menu);
+  }
+
+  public void setSwitchStatus(SwitchCompat mSwitch) {
+    if (AppUtils.isServiceRunning(TrackerService.class, this) && mSwitch != null) {
+      mSwitch.setChecked(true);
+    }
   }
 }
