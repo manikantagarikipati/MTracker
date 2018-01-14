@@ -74,6 +74,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   }
 
   private void observeCurrentLocation() {
+    //observe for user current location using live data model
     LocationLiveData.getInstance(this).observe(this,
         new Observer<Location>() {
           @Override
@@ -84,6 +85,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     displayCurrentJourneyPath();
   }
 
+  ///If there is already an journey going on rebuild the path UI
   private void displayCurrentJourneyPath() {
     if ((AppPreferences.getCurrentJourneyId(this) != 0)) {
       if (!AppUtils.isServiceRunning(TrackerService.class, this)) {
@@ -96,6 +98,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       MRepo.getLocationsForJourney(AppPreferences.getCurrentJourneyId(this), new LocationFetchCB() {
         @Override
         public void onLocationLoaded(List<MLocation> mLocations) {
+          //when locations are avaiable plot those locations
           if (CollectionUtils.isNotEmpty(mLocations)) {
             MLocation startLocation = mLocations.get(0);
             if (mCurrLocationMarker != null) {
@@ -104,19 +107,11 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
             mCurrLocationMarker = MapUtils
                 .addMarker(startLocation.getLatitude(), startLocation.getLongitude(), mMap,
                     "");
-//            if (polyline != null) {
-//              MapUtils.displayExistingPathInfo(
-//                  mLocations,
-//                  ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor),
-//                  polyline);
-//            } else {
             polyline = MapUtils.displayPathInfo(mMap, mLocations,
                 ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor));
-//            }
 
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(startLocation.getLatitude(), startLocation.getLongitude()), 11));
-
           }
         }
 
@@ -129,10 +124,12 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
 
   private void displayCurrentLocationMarker(Location location) {
+    //if journey is already going on then location is part of the polyline indeed
     if (AppPreferences.getCurrentJourneyId(MapsActivity.this) != 0) {
       //this is a journey marker location hence just mark it as a dot etc.. as a path
       addLocationToPolyLine(location);
     } else {
+      //if no journey is going on then simply replace the current location marker
       if (mCurrLocationMarker != null) {
         mCurrLocationMarker.remove();
       }
@@ -171,6 +168,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   @Override
   public void onMapPermissionsProvided() {
+    //once locations are provided start looking for location updates
     observeCurrentLocation();
   }
 
@@ -211,6 +209,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   private void stopJourney() {
     final LatLng latLng = setEndMarker();
+    //perform operation in background
     MRepo.fetchJourney(AppPreferences.getCurrentJourneyId(MapsActivity.this), new JourneyFetchCB() {
       @Override
       public void onJourneyLoaded(MJourney journey) {
@@ -222,14 +221,13 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
           List<LatLng> points = polyline.getPoints();
           points.clear();
           polyline.setPoints(points);
-          AppUtils
-              .geoCode(MapsActivity.this, journey.getJourneyId(), latLng.latitude, latLng.longitude,
+          AppUtils.geoCode(MapsActivity.this, journey.getJourneyId(),
+              latLng.latitude, latLng.longitude,
                   false);
           AppUtils.showToast(MapsActivity.this, R.string.msg_journey_completed);
           AppUtils.displayJourneyDetail(MapsActivity.this, journey.getJourneyId());
         }
       }
-
       @Override
       public void onError() {
       }

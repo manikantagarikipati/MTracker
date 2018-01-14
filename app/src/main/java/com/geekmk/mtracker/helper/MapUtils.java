@@ -32,12 +32,6 @@ public class MapUtils {
   public static final String STATIC_MAPS_PARAM_VALUE_LABEL = "label:DEFAULT";
   public static final String STATIC_MAPS_PARAM_VALUE_SEPARATOR = "%7C";
   public static final String VALUE_EMPTY = "";
-  public static final int STATIC_MAPS_DEFAULT_ZOOM_LEVEL = 14;
-  public static final int STATIC_MAPS_DEFAULT_WIDTH = 400;
-  public static final int STATIC_MAPS_DEFAULT_HEIGHT = 150;
-  public static final int STATIC_MAP_HEIGHT = 200;
-  public static final int STATIC_MAPS_WIDTH_IN_FORM = 450;
-
   private MapUtils() {
   }
 
@@ -45,6 +39,13 @@ public class MapUtils {
     return addMarker(location.getLatitude(), location.getLongitude(), googleMap, title);
   }
 
+  /**
+   * Add marker to the map and return it
+   *
+   * @param latitude latitude
+   * @param longitude longitude
+   * @param googleMap map where the marker need to be added
+   */
   public static Marker addMarker(double latitude, double longitude, GoogleMap googleMap,
       String title) {
     LatLng latLng = new LatLng(latitude, longitude);
@@ -84,7 +85,12 @@ public class MapUtils {
     return url;
   }
 
-
+  /**
+   * Display polyline path for a single location with rounded start and end cap settings
+   * @param googleMap GoogleMap where the polyline needs to be implemented
+   * @param locationList list of locations which is added to the polyline path
+   * @param polylinecolor color of the polyline path
+   * */
   public static Polyline displayPathInfo(GoogleMap googleMap, List<MLocation> locationList,
       int polylinecolor) {
     List<LatLng> latLngList = new ArrayList<>();
@@ -118,6 +124,12 @@ public class MapUtils {
     return polyline;
   }
 
+  /**
+   * Display polyline path for a single location with rounded start and end cap settings
+   * @param googleMap GoogleMap where the polyline needs to be implemented
+   * @param mLocation location to which we need to add polyline
+   * @param polylinecolor color of the polyline path
+   * */
   public static Polyline displayPathInfo(GoogleMap googleMap, Location mLocation,
       int polylinecolor) {
     PolylineOptions polylineOptions = new PolylineOptions();

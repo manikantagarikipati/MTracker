@@ -4,6 +4,7 @@ import android.view.View;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
+ * An error view when there are no journeys
  */
 
 public class EmptyJourneysViewHolder extends BaseViewHolder<EmptyJourneyView> {
@@ -14,6 +15,5 @@ public class EmptyJourneysViewHolder extends BaseViewHolder<EmptyJourneyView> {
 
   @Override
   public void setViewData(EmptyJourneyView bean) {
-
   }
 }

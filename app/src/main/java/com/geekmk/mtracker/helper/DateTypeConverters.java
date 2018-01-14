@@ -5,8 +5,10 @@ import java.util.Date;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
+ *
+ * A date type convertor used by room persistence to understand the date object and
+ * convert it into its equivalent primitives
  */
-
 public class DateTypeConverters {
 
   @TypeConverter

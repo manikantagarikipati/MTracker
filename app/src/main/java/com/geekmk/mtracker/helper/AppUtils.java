@@ -93,6 +93,9 @@ public class AppUtils {
     }
   }
 
+  /**
+   * Displays the journey detail activity that polts the user location tracked information
+   */
   public static void displayJourneyDetail(Context context, long journeyId) {
     Intent intent = new Intent(context, JourneyDetailActivity.class);
     intent.putExtra(AppConstants.EXTRA_JOURNEY_ID, journeyId);

@@ -32,6 +32,9 @@ import java.util.Map;
 
 /**
  * Created by manikanta.garikipati on 13/01/18.
+ *
+ * A service that tracks the user location when in background and store in database
+ * if currently a journey is going on
  */
 
 public class TrackerService extends LifecycleService {
@@ -46,7 +49,7 @@ public class TrackerService extends LifecycleService {
   private static final int FOREGROUND_SERVICE_ID = 1;
   private static final int NOTIFICATION_ID = 1;
 
-  private Looper mServiceLooper;
+
   private ServiceHandler mServiceHandler;
 
   // Handler that receives messages from the thread
@@ -82,12 +85,16 @@ public class TrackerService extends LifecycleService {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    //if at all we need to perform any heavy running operations better not to do in UI thread
+    //as the service runs in UI better we create a seperate handler thread and perform
+    //any kind of operations
     HandlerThread thread = new HandlerThread("ServiceStartArguments",
         Process.THREAD_PRIORITY_BACKGROUND);
     thread.start();
 
     // Get the HandlerThread's Looper and use it for our Handler
-    mServiceLooper = thread.getLooper();
+    Looper mServiceLooper = thread.getLooper();
     mServiceHandler = new ServiceHandler(mServiceLooper);
 
     //displaying notification on what is happening behind the hood
@@ -102,7 +109,7 @@ public class TrackerService extends LifecycleService {
     };
 
     LocationLiveData.getInstance(this).observe(TrackerService.this, locationObserver);
-// Hold a partial wake lock to keep CPU awake when the we're tracking location.
+// Hold a partial wake lock to keep CPU awake when  we're tracking location.
     PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
     mWakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakelockTag");
     mWakelock.acquire();

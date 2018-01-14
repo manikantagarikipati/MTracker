@@ -11,6 +11,8 @@ import java.util.List;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
+ * AN adapter that displays the list journey list if available or else show the corresponding
+ * error views
  */
 
 public class JourneyAdapter extends RecyclerView.Adapter<BaseViewHolder> {

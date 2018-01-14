@@ -13,6 +13,8 @@ import java.util.Locale;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
+ *
+ * Performs geocoding given the latitude and longitude
  */
 
 public class FetchAddressIntentService extends IntentService {
