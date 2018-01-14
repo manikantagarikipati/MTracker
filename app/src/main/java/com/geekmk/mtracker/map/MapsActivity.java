@@ -274,6 +274,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       });
 
     } else {
+      mSwitch.setChecked(false);
       AppUtils.showToast(this, R.string.msg_cannot_identify_loc);
     }
   }
