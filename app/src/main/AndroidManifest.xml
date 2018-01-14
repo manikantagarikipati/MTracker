@@ -18,8 +18,8 @@
 
     <activity
       android:label="@string/title_activity_maps"
-      android:theme="@style/AppTheme.NoActionBar"
-      android:name=".map.MapsActivity">
+      android:name=".map.MapsActivity"
+      android:theme="@style/AppTheme.NoActionBar">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
 
@@ -45,6 +45,14 @@
       </intent-filter>
     </receiver>
 
+    <activity
+      android:label="@string/title_activity_journey_list"
+      android:name=".journey.JourneyListActivity"
+      android:theme="@style/AppTheme.NoActionBar" />
+    <activity
+      android:label="@string/title_activity_journey_detail"
+      android:name=".journeydetail.JourneyDetailActivity"
+      android:theme="@style/AppTheme.NoActionBar"></activity>
   </application>
 
 </manifest>

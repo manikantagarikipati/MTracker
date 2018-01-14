@@ -7,4 +7,5 @@
   <color name="switch_on">#00FF00</color>
   <color name="switch_off">#FF0000</color>
   <color name="polylinecolor">#2979FF</color>
+  <color name="black">#000000</color>
 </resources>

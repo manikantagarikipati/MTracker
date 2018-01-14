@@ -4,12 +4,35 @@ package com.geekmk.mtracker.database;
  * Created by manikanta.garikipati on 13/01/18.
  */
 
-class DataBaseConstants {
+public class DataBaseConstants {
 
   private DataBaseConstants() {
   }
 
   public static final String TABLE_LOCATION = "Location";
+
+  public static final String TABLE_JOURNEY = "Journey";
+
+
+  public static final class JourneyColumn {
+
+    public static final String JOURNEY_ID = "id";
+
+    public static final String STATUS = "status";
+
+    public static final String START = "startLocation";
+
+    public static final String END = "endLocation";
+
+    public static final String START_NAME = "startPlace";
+
+    public static final String END_NAME = "endName";
+
+    public static final String START_TIME = "startTime";
+
+    public static final String END_TIME = "endTime";
+  }
+
 
   public static final class LocationColumn {
 

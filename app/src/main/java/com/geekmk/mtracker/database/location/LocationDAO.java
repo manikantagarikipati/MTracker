@@ -1,9 +1,10 @@
-package com.geekmk.mtracker.database;
+package com.geekmk.mtracker.database.location;
 
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
+import com.geekmk.mtracker.database.DataBaseConstants;
 import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
 import java.util.List;
 
@@ -23,5 +24,6 @@ public interface LocationDAO {
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insertLocation(MLocation location);
+
 
 }

@@ -1,7 +1,8 @@
-package com.geekmk.mtracker.database;
+package com.geekmk.mtracker.database.location;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import com.geekmk.mtracker.database.DataBaseConstants;
 import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
 
 
@@ -11,7 +12,6 @@ import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
 
 @Entity(tableName = DataBaseConstants.TABLE_LOCATION)
 public class MLocation {
-
 
   @ColumnInfo(name = LocationColumn.JOURNEY_ID)
   private long journeyId;

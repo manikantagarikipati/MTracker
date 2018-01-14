@@ -14,5 +14,8 @@
   <string name="prefs">userPref</string>
   <string name="val_current_journey">currentJrny</string>
   <string name="title_activity_main">MainActivity</string>
+  <string name="title_activity_journey_list">JourneyListActivity</string>
+  <string name="empty_journeys">oh!!! there no journeys found try starting a journey...</string>
+  <string name="title_activity_journey_detail">JourneyDetailActivity</string>
 
 </resources>

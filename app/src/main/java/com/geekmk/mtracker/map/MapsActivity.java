@@ -37,7 +37,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   private GoogleMap mMap;
 
   private Marker mCurrLocationMarker;
-  private SwitchCompat mSwitch;
   private Polyline polyline;
 
 
@@ -140,7 +139,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     getMenuInflater().inflate(R.menu.menu_map, menu);
     // Get the action view used in your toggleservice item
     final MenuItem toggle = menu.findItem(R.id.menu_switch);
-    mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
+    SwitchCompat mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
     mSwitch.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {

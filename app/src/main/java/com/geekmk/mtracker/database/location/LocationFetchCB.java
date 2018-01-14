@@ -1,4 +1,4 @@
-package com.geekmk.mtracker.database;
+package com.geekmk.mtracker.database.location;
 
 import java.util.List;
 
