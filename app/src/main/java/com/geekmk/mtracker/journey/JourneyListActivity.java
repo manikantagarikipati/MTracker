@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.database.journey.MJourney;
 import com.geekmk.mtracker.helper.CollectionUtils;
@@ -24,6 +25,7 @@ public class JourneyListActivity extends AppCompatActivity {
     setContentView(R.layout.activity_journey_list);
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
+    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     initComponents();
     observeForJourneys();
   }
@@ -34,6 +36,18 @@ public class JourneyListActivity extends AppCompatActivity {
     rvJourneys.setHasFixedSize(true);
     journeyAdapter = new JourneyAdapter();
     rvJourneys.setAdapter(journeyAdapter);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case android.R.id.home:
+        finish();
+        return false;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+
   }
 
   private void observeForJourneys() {

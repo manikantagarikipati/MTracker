@@ -2,6 +2,7 @@ package com.geekmk.mtracker.database.location;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
 import com.geekmk.mtracker.database.DataBaseConstants;
 import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
 
@@ -12,6 +13,9 @@ import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
 
 @Entity(tableName = DataBaseConstants.TABLE_LOCATION)
 public class MLocation {
+
+  @PrimaryKey(autoGenerate = true)
+  private long locationId;
 
   @ColumnInfo(name = LocationColumn.JOURNEY_ID)
   private long journeyId;
@@ -78,4 +82,13 @@ public class MLocation {
   public void setBatteryLevel(float batteryLevel) {
     this.batteryLevel = batteryLevel;
   }
+
+  public long getLocationId() {
+    return locationId;
+  }
+
+  public void setLocationId(long locationId) {
+    this.locationId = locationId;
+  }
+
 }

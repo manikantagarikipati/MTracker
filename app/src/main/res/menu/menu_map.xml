@@ -6,4 +6,9 @@
     android:title=""
     app:actionLayout="@layout/switch_layout"
     app:showAsAction="always" />
+  <item
+    android:id="@+id/menu_journey_list"
+    android:title="@string/title_activity_journey_list"
+    android:icon="@drawable/ic_view_list_white_48dp"
+    app:showAsAction="always" />
 </menu>

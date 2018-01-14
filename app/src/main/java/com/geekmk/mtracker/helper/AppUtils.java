@@ -7,9 +7,9 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.BatteryManager;
 import android.util.Log;
+import com.google.android.gms.maps.model.LatLng;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by manikanta.garikipati on 13/01/18.
@@ -63,8 +63,18 @@ public class AppUtils {
     return false;
   }
 
-  public static int getUniqueId() {
-    AtomicInteger c = new AtomicInteger(0);
-    return c.incrementAndGet();
+  public static String buildLatLngString(LatLng position) {
+
+    return position.latitude + AppConstants.LatLngSeparator + position.longitude;
+  }
+
+  public static LatLng getLatLng(String startLatLng) {
+    try {
+      String[] info = startLatLng.split(AppConstants.LatLngSeparator);
+      LatLng latLng = new LatLng(Double.valueOf(info[0]), Double.valueOf(info[1]));
+      return latLng;
+    } catch (Exception e) {
+    }
+    return null;
   }
 }

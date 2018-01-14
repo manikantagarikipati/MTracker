@@ -3,7 +3,12 @@ package com.geekmk.mtracker.map;
 import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.SwitchCompat;
@@ -13,12 +18,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Toast;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
+import com.geekmk.mtracker.database.AppDatabase;
+import com.geekmk.mtracker.database.journey.MJourney;
+import com.geekmk.mtracker.helper.AppConstants.JourneyStatus;
 import com.geekmk.mtracker.helper.AppPreferences;
 import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.helper.MapUtils;
+import com.geekmk.mtracker.journey.JourneyListActivity;
 import com.geekmk.mtracker.tracker.TrackerService;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,7 +36,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
+import java.util.Calendar;
 import java.util.List;
 
 public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
@@ -89,11 +99,8 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   private void addLocationToPolyLine(Location location) {
     if (polyline == null) {
-      PolylineOptions polylineOptions = new PolylineOptions();
-      polylineOptions.add(new LatLng(location.getLatitude(), location.getLongitude()));
-      polylineOptions.width(18);
-      polylineOptions.color(ContextCompat.getColor(this, R.color.polylinecolor));
-      polyline = mMap.addPolyline(polylineOptions);
+      polyline = MapUtils
+          .displayPathInfo(mMap, location, ContextCompat.getColor(this, R.color.polylinecolor));
     } else {
       List<LatLng> existingPOints = polyline.getPoints();
       existingPOints.add(new LatLng(location.getLatitude(), location.getLongitude()));
@@ -132,7 +139,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_map, menu);
-    // Get the action view used in your toggleservice item
     final MenuItem toggle = menu.findItem(R.id.menu_switch);
     SwitchCompat mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
     mSwitch.setOnClickListener(new OnClickListener() {
@@ -141,14 +147,43 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
         if (((SwitchCompat) v).isChecked()) {
           startJourney();
         } else {
-          AppPreferences.setJourneyId(0, MapsActivity.this);
-          setEndMarker();
-          stopService(new Intent(MapsActivity.this, TrackerService.class));
+          stopJourney();
         }
       }
     });
     setSwitchStatus(mSwitch);
     return super.onCreateOptionsMenu(menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.menu_journey_list:
+        startActivity(new Intent(MapsActivity.this, JourneyListActivity.class));
+        return false;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+
+  private void stopJourney() {
+
+    final LatLng latLng = setEndMarker();
+    AppDatabase.getInstance(MapsActivity.this)
+        .journeyDAO().fetchJourney(AppPreferences.getCurrentJourneyId(MapsActivity.this))
+        .observe(MapsActivity.this, new Observer<MJourney>() {
+          @Override
+          public void onChanged(@Nullable MJourney journey) {
+            if (journey != null) {
+              journey.setEndLatLng(AppUtils.buildLatLngString(latLng));
+              journey.setEndTime(Calendar.getInstance().getTime().getTime());
+              journey.setStatus(JourneyStatus.COMPLETED);
+              AppDatabase.getInstance(MapsActivity.this).journeyDAO().insertJourney(journey);
+            }
+            stopService(new Intent(MapsActivity.this, TrackerService.class));
+          }
+        });
+    AppPreferences.setJourneyId(0, MapsActivity.this);
   }
 
   private void startJourney() {
@@ -157,11 +192,29 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       points.clear();
       polyline.setPoints(points);
     }
-    AppPreferences.setJourneyId(AppUtils.getUniqueId(), MapsActivity.this);
-    startService(new Intent(MapsActivity.this, TrackerService.class));
+    if (mCurrLocationMarker != null) {
+      PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+      Intent intent = new Intent();
+      if (VERSION.SDK_INT >= VERSION_CODES.M) {
+        if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
+          intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+          intent.setData(Uri.parse("package:" + getPackageName()));
+          startActivity(intent);
+        }
+      }
+      MJourney mJourney = new MJourney();
+      mJourney.setStartLatLng(AppUtils.buildLatLngString(mCurrLocationMarker.getPosition()));
+      mJourney.setStartTime(Calendar.getInstance().getTime().getTime());
+      mJourney.setStatus(JourneyStatus.ONGOING);
+      long journeyId = AppDatabase.getInstance(this).journeyDAO().insertJourney(mJourney);
+      AppPreferences.setJourneyId(journeyId, MapsActivity.this);
+      startService(new Intent(MapsActivity.this, TrackerService.class));
+    } else {
+      Toast.makeText(this, "Cannot identify current location", Toast.LENGTH_SHORT).show();
+    }
   }
 
-  private void setEndMarker() {
+  private LatLng setEndMarker() {
     if (polyline != null) {
       List<LatLng> existingPoints = polyline.getPoints();
       LatLng latLng = existingPoints.get(existingPoints.size() - 1);
@@ -169,7 +222,10 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       location.setLatitude(latLng.latitude);
       location.setLongitude(latLng.longitude);
       MapUtils.addMarker(location, "", mMap);
+      return latLng;
     }
+
+    return null;
   }
 
   public void setSwitchStatus(SwitchCompat mSwitch) {

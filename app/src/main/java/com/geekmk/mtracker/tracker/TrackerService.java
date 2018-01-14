@@ -5,15 +5,23 @@ import android.app.PendingIntent;
 import android.arch.lifecycle.LifecycleService;
 import android.arch.lifecycle.Observer;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.PowerManager;
+import android.os.Process;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import com.geekmk.mtracker.R;
+import com.geekmk.mtracker.database.AppDatabase;
+import com.geekmk.mtracker.database.location.MLocation;
 import com.geekmk.mtracker.helper.AppConstants;
+import com.geekmk.mtracker.helper.AppPreferences;
 import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.map.LocationLiveData;
 import com.geekmk.mtracker.map.MapsActivity;
@@ -29,14 +37,42 @@ import java.util.Map;
 public class TrackerService extends LifecycleService {
 
   private static final String TAG = TrackerService.class.getSimpleName();
-  //  private PowerManager.WakeLock mWakelock;
-  private SharedPreferences mPrefs;
+  private static final int MSG_TYPE_LOCATION = 12;
+  private PowerManager.WakeLock mWakelock;
   private NotificationManager mNotificationManager;
   private NotificationCompat.Builder mNotificationBuilder;
   private LinkedList<Map<String, Object>> mTrackingStatus = new LinkedList<>();
 
   private static final int FOREGROUND_SERVICE_ID = 1;
   private static final int NOTIFICATION_ID = 1;
+
+  private Looper mServiceLooper;
+  private ServiceHandler mServiceHandler;
+
+  // Handler that receives messages from the thread
+  private final class ServiceHandler extends Handler {
+
+    public ServiceHandler(Looper looper) {
+      super(looper);
+    }
+
+    @Override
+    public void handleMessage(Message msg) {
+      if (msg.arg1 == MSG_TYPE_LOCATION) {
+        Map<String, Object> info = (Map<String, Object>) msg.obj;
+        MLocation mLocation = new MLocation();
+        mLocation
+            .setJourneyId(AppPreferences.getCurrentJourneyId(getApplication().getBaseContext()));
+        mLocation.setBatteryLevel((float) info.get("power"));
+        mLocation.setTime((Long) info.get("time"));
+        mLocation.setLatitude((Double) info.get("lat"));
+        mLocation.setLongitude((Double) info.get("lng"));
+
+        AppDatabase.getInstance(getApplication().getBaseContext()).locationDAO()
+            .insertLocation(mLocation);
+      }
+    }
+  }
 
   public TrackerService() {
   }
@@ -46,6 +82,14 @@ public class TrackerService extends LifecycleService {
   @Override
   public void onCreate() {
     super.onCreate();
+    HandlerThread thread = new HandlerThread("ServiceStartArguments",
+        Process.THREAD_PRIORITY_BACKGROUND);
+    thread.start();
+
+    // Get the HandlerThread's Looper and use it for our Handler
+    mServiceLooper = thread.getLooper();
+    mServiceHandler = new ServiceHandler(mServiceLooper);
+
     //displaying notification on what is happening behind the hood
     buildNotification();
     setStatusMessage(R.string.msg_service_started);
@@ -58,7 +102,10 @@ public class TrackerService extends LifecycleService {
     };
 
     LocationLiveData.getInstance(this).observe(TrackerService.this, locationObserver);
-
+// Hold a partial wake lock to keep CPU awake when the we're tracking location.
+    PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+    mWakelock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyWakelockTag");
+    mWakelock.acquire();
   }
 
 
@@ -79,8 +126,6 @@ public class TrackerService extends LifecycleService {
         // the time the location was arrived at, and the latest representing the
         // current time.
         mTrackingStatus.set(0, trackStatus);
-        // Only need to update 0th status, so we can save bandwidth.
-//      mFirebaseTransportRef.child("0").setValue(transportStatus);
       } else {
         // Maintain a fixed number of previous statuses.
         while (mTrackingStatus.size() >= AppConstants.MAX_STATUSES) {
@@ -90,8 +135,11 @@ public class TrackerService extends LifecycleService {
         // We push the entire list at once since each key/index changes, to
         // minimize network requests.
         //todo insert into db
+        Message message = mServiceHandler.obtainMessage();
+        message.arg1 = MSG_TYPE_LOCATION;
+        message.obj = mTrackingStatus.getFirst();
+        mServiceHandler.sendMessage(message);
         Log.d(TrackerService.TAG, location.toString());
-//      mFirebaseTransportRef.setValue(mTransportStatuses);a
       }
     }
   }
@@ -103,10 +151,10 @@ public class TrackerService extends LifecycleService {
     // Stop the persistent notification.
     mNotificationManager.cancel(NOTIFICATION_ID);
     LocationLiveData.getInstance(this).removeObserver(locationObserver);
-//    // Release the wakelock
-//    if (mWakelock != null) {
-//      mWakelock.release();
-//    }
+    // Release the wakelock
+    if (mWakelock != null) {
+      mWakelock.release();
+    }
     super.onDestroy();
   }
 
@@ -138,11 +186,6 @@ public class TrackerService extends LifecycleService {
 
     mNotificationBuilder.setContentText(getString(stringId));
     mNotificationManager.notify(NOTIFICATION_ID, mNotificationBuilder.build());
-
-//    // Also display the status message in the activity.
-//    Intent intent = new Intent(STATUS_INTENT);
-//    intent.putExtra(getString(R.string.status), stringId);
-//    LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
   }
 
   @Override

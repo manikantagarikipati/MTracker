@@ -24,7 +24,7 @@ public class JourneyAdapter extends RecyclerView.Adapter<BaseViewHolder> {
 
   public void resetView(List<ViewIdentifier> viewIdentifierList) {
     if (CollectionUtils.isNotEmpty(viewIdentifierList)) {
-      viewIdentifierList.clear();
+      this.viewIdentifierList.clear();
       this.viewIdentifierList.addAll(viewIdentifierList);
       notifyDataSetChanged();
     }
@@ -43,8 +43,14 @@ public class JourneyAdapter extends RecyclerView.Adapter<BaseViewHolder> {
   }
 
   @Override
+  public int getItemViewType(int position) {
+    return viewIdentifierList.get(position).getResourceType();
+  }
+
+  @Override
   public void onBindViewHolder(BaseViewHolder holder, int position) {
 
+    holder.setViewData(viewIdentifierList.get(position));
   }
 
   @Override

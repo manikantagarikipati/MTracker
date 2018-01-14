@@ -14,11 +14,11 @@ import com.geekmk.mtracker.database.DataBaseConstants.JourneyColumn;
 public class MJourney {
 
   @ColumnInfo(name = JourneyColumn.JOURNEY_ID)
-  @PrimaryKey
+  @PrimaryKey(autoGenerate = true)
   private long journeyId;
 
   @ColumnInfo(name = JourneyColumn.STATUS)
-  private String status;
+  private int status;
 
   @ColumnInfo(name = JourneyColumn.START)
   private String startLatLng;
@@ -71,11 +71,11 @@ public class MJourney {
     this.journeyId = journeyId;
   }
 
-  public String getStatus() {
+  public int getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(int status) {
     this.status = status;
   }
 

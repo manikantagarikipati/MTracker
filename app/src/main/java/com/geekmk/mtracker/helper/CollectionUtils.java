@@ -23,5 +23,4 @@ public class CollectionUtils {
     return input == null || input.isEmpty();
   }
 
-
 }

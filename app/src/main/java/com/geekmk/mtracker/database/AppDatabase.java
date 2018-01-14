@@ -30,6 +30,8 @@ public abstract class AppDatabase extends RoomDatabase {
     if (sInstance == null) {
       sInstance = Room
           .databaseBuilder(context.getApplicationContext(), AppDatabase.class, "mtracker")
+          //should be done in a separate handler thread will add based on the time availabitiy
+          .allowMainThreadQueries()
           .build();
     }
     return sInstance;
