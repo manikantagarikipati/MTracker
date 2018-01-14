@@ -9,6 +9,7 @@ import android.os.BatteryManager;
 import android.util.Log;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by manikanta.garikipati on 13/01/18.
@@ -62,4 +63,8 @@ public class AppUtils {
     return false;
   }
 
+  public static int getUniqueId() {
+    AtomicInteger c = new AtomicInteger(0);
+    return c.incrementAndGet();
+  }
 }

@@ -15,4 +15,11 @@ public class AppPreferences {
         .getSharedPreferences(context.getString(R.string.prefs), Context.MODE_PRIVATE);
     return mPrefs.getLong(context.getString(R.string.val_current_journey), 0L);
   }
+
+  public static void setJourneyId(int uniqueId, Context context) {
+    SharedPreferences.Editor mPrefs = context
+        .getSharedPreferences(context.getString(R.string.prefs), Context.MODE_PRIVATE).edit();
+    mPrefs.putLong(context.getString(R.string.val_current_journey), uniqueId);
+    mPrefs.apply();
+  }
 }
