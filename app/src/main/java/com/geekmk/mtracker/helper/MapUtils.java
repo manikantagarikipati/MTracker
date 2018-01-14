@@ -102,12 +102,32 @@ public class MapUtils {
     return polyline;
   }
 
+  public static Polyline displayExistingPathInfo(List<MLocation> locationList,
+      int polylinecolor, Polyline polyline) {
+    List<LatLng> latLngList = new ArrayList<>();
+    for (MLocation mLocation : locationList) {
+      latLngList.add(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
+    }
+    PolylineOptions polylineOptions = new PolylineOptions();
+    polylineOptions.addAll(latLngList);
+    polylineOptions.width(18);
+    polylineOptions.color(polylinecolor);
+    polyline.setStartCap(new RoundCap());
+    polyline.setEndCap(new RoundCap());
+    polyline.setJointType(JointType.ROUND);
+    return polyline;
+  }
+
   public static Polyline displayPathInfo(GoogleMap googleMap, Location mLocation,
       int polylinecolor) {
     PolylineOptions polylineOptions = new PolylineOptions();
     polylineOptions.add(new LatLng(mLocation.getLatitude(), mLocation.getLongitude()));
     polylineOptions.width(18);
     polylineOptions.color(polylinecolor);
-    return googleMap.addPolyline(polylineOptions);
+    Polyline polyline = googleMap.addPolyline(polylineOptions);
+    polyline.setStartCap(new RoundCap());
+    polyline.setEndCap(new RoundCap());
+    polyline.setJointType(JointType.ROUND);
+    return polyline;
   }
 }

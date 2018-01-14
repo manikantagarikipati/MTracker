@@ -187,10 +187,4 @@ public class TrackerService extends LifecycleService {
     mNotificationBuilder.setContentText(getString(stringId));
     mNotificationManager.notify(NOTIFICATION_ID, mNotificationBuilder.build());
   }
-
-  @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
-    super.onStartCommand(intent, flags, startId);
-    return START_STICKY;
-  }
 }

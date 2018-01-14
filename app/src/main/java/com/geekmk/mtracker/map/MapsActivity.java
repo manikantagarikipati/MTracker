@@ -1,6 +1,7 @@
 package com.geekmk.mtracker.map;
 
 import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
@@ -18,18 +19,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Toast;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
-import com.geekmk.mtracker.database.AppDatabase;
+import com.geekmk.mtracker.base.MRepo;
+import com.geekmk.mtracker.database.journey.JourneyFetchCB;
+import com.geekmk.mtracker.database.journey.JourneyInsertCB;
 import com.geekmk.mtracker.database.journey.MJourney;
+import com.geekmk.mtracker.database.location.MLocation;
 import com.geekmk.mtracker.helper.AppConstants.JourneyStatus;
 import com.geekmk.mtracker.helper.AppPreferences;
 import com.geekmk.mtracker.helper.AppUtils;
+import com.geekmk.mtracker.helper.CollectionUtils;
 import com.geekmk.mtracker.helper.MapUtils;
 import com.geekmk.mtracker.journey.JourneyListActivity;
+import com.geekmk.mtracker.journeydetail.JourneyLocationViewModel;
 import com.geekmk.mtracker.tracker.TrackerService;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -43,7 +49,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     MapPermissionsProvidedCB {
 
   private GoogleMap mMap;
-
+  private SwitchCompat mSwitch;
   private Marker mCurrLocationMarker;
   private Polyline polyline;
 
@@ -76,11 +82,47 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
             displayCurrentLocationMarker(location);
           }
         });
-    if (AppPreferences.getCurrentJourneyId(this) != 0) {
-      //todo load latlng from db and also start service if it is killed/not recreated in any case
-      if (!AppUtils.isServiceRunning(TrackerService.class, this)) {
-        startService(new Intent(MapsActivity.this, TrackerService.class));
+    displayCurrentJourneyPath();
+  }
+
+  private void displayCurrentJourneyPath() {
+    if ((AppPreferences.getCurrentJourneyId(this) != 0) &&
+        !AppUtils.isServiceRunning(TrackerService.class, this)) {
+      startService(new Intent(MapsActivity.this, TrackerService.class));
+      if (mSwitch != null) {
+        mSwitch.setChecked(true);
       }
+      JourneyLocationViewModel journeyListViewModel = ViewModelProviders.of(this)
+          .get(JourneyLocationViewModel.class);
+      journeyListViewModel.getLocationsForJourney(AppPreferences.getCurrentJourneyId(this))
+          .observe(this,
+              new Observer<List<MLocation>>() {
+                @Override
+                public void onChanged(@Nullable List<MLocation> mLocations) {
+                  if (CollectionUtils.isNotEmpty(mLocations)) {
+                    MLocation startLocation = mLocations.get(0);
+                    if (mCurrLocationMarker != null) {
+                      mCurrLocationMarker.remove();
+                    }
+                    mCurrLocationMarker = MapUtils
+                        .addMarker(startLocation.getLatitude(), startLocation.getLongitude(), mMap,
+                            "");
+                    if (polyline != null) {
+                      MapUtils.displayExistingPathInfo(
+                          mLocations,
+                          ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor),
+                          polyline);
+                    } else {
+                      polyline = MapUtils.displayPathInfo(mMap, mLocations,
+                          ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor));
+                    }
+
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(startLocation.getLatitude(), startLocation.getLongitude()), 11));
+
+                  }
+                }
+              });
     }
   }
 
@@ -140,7 +182,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_map, menu);
     final MenuItem toggle = menu.findItem(R.id.menu_switch);
-    SwitchCompat mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
+    mSwitch = toggle.getActionView().findViewById(R.id.switchInActionBar);
     mSwitch.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -167,22 +209,30 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   }
 
   private void stopJourney() {
-
     final LatLng latLng = setEndMarker();
-    AppDatabase.getInstance(MapsActivity.this)
-        .journeyDAO().fetchJourney(AppPreferences.getCurrentJourneyId(MapsActivity.this))
-        .observe(MapsActivity.this, new Observer<MJourney>() {
-          @Override
-          public void onChanged(@Nullable MJourney journey) {
-            if (journey != null) {
-              journey.setEndLatLng(AppUtils.buildLatLngString(latLng));
-              journey.setEndTime(Calendar.getInstance().getTime().getTime());
-              journey.setStatus(JourneyStatus.COMPLETED);
-              AppDatabase.getInstance(MapsActivity.this).journeyDAO().insertJourney(journey);
-            }
-            stopService(new Intent(MapsActivity.this, TrackerService.class));
-          }
-        });
+    MRepo.fetchJourney(AppPreferences.getCurrentJourneyId(MapsActivity.this), new JourneyFetchCB() {
+      @Override
+      public void onJourneyLoaded(MJourney journey) {
+        if (latLng != null) {
+          journey.setEndLatLng(AppUtils.buildLatLngString(latLng));
+          journey.setEndTime(Calendar.getInstance().getTime().getTime());
+          journey.setStatus(JourneyStatus.COMPLETED);
+          MRepo.addJourney(journey, null);
+          List<LatLng> points = polyline.getPoints();
+          points.clear();
+          polyline.setPoints(points);
+          AppUtils.showToast(MapsActivity.this, R.string.msg_journey_completed);
+          AppUtils.displayJourneyDetail(MapsActivity.this, journey.getJourneyId());
+        }
+      }
+
+      @Override
+      public void onError() {
+      }
+    });
+
+    stopService(new Intent(MapsActivity.this, TrackerService.class));
+
     AppPreferences.setJourneyId(0, MapsActivity.this);
   }
 
@@ -206,11 +256,21 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       mJourney.setStartLatLng(AppUtils.buildLatLngString(mCurrLocationMarker.getPosition()));
       mJourney.setStartTime(Calendar.getInstance().getTime().getTime());
       mJourney.setStatus(JourneyStatus.ONGOING);
-      long journeyId = AppDatabase.getInstance(this).journeyDAO().insertJourney(mJourney);
-      AppPreferences.setJourneyId(journeyId, MapsActivity.this);
-      startService(new Intent(MapsActivity.this, TrackerService.class));
+      MRepo.addJourney(mJourney, new JourneyInsertCB() {
+        @Override
+        public void onInsertSuccess(long id) {
+          AppPreferences.setJourneyId(id, MapsActivity.this);
+          startService(new Intent(MapsActivity.this, TrackerService.class));
+        }
+
+        @Override
+        public void onInsertFailed() {
+          AppUtils.showToast(MapsActivity.this, "Journey creation failed");
+        }
+      });
+
     } else {
-      Toast.makeText(this, "Cannot identify current location", Toast.LENGTH_SHORT).show();
+      AppUtils.showToast(this, R.string.msg_cannot_identify_loc);
     }
   }
 
@@ -224,7 +284,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       MapUtils.addMarker(location, "", mMap);
       return latLng;
     }
-
     return null;
   }
 
@@ -233,5 +292,4 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       mSwitch.setChecked(true);
     }
   }
-
 }

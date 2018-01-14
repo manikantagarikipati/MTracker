@@ -14,7 +14,9 @@
   <string name="prefs">userPref</string>
   <string name="val_current_journey">currentJrny</string>
   <string name="title_activity_journey_list">My Journeys</string>
-  <string name="empty_journeys">oh!!! there no journeys found try starting a journey…</string>
+  <string name="empty_journeys">Oh!!! there no journeys found try starting a journey…</string>
   <string name="title_activity_journey_detail">Details</string>
+  <string name="msg_cannot_identify_loc">Cannot identify current location</string>
+  <string name="msg_journey_completed">Journey Completed</string>
 
 </resources>

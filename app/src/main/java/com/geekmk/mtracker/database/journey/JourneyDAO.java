@@ -24,5 +24,5 @@ public interface JourneyDAO {
 
   @Query("SELECT * FROM " + DataBaseConstants.TABLE_JOURNEY + " WHERE "
       + JourneyColumn.JOURNEY_ID + " LIKE :journeyId LIMIT 1")
-  LiveData<MJourney> fetchJourney(long journeyId);
+  MJourney fetchJourney(long journeyId);
 }

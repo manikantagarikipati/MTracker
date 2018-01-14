@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.BatteryManager;
 import android.util.Log;
+import android.widget.Toast;
+import com.geekmk.mtracker.journeydetail.JourneyDetailActivity;
 import com.google.android.gms.maps.model.LatLng;
 import java.util.LinkedList;
 import java.util.Map;
@@ -76,5 +78,23 @@ public class AppUtils {
     } catch (Exception e) {
     }
     return null;
+  }
+
+  public static void showToast(Context context, String msg) {
+    if (context != null) {
+      Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  public static void showToast(Context context, int resId) {
+    if (context != null) {
+      Toast.makeText(context, context.getString(resId), Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  public static void displayJourneyDetail(Context context, long journeyId) {
+    Intent intent = new Intent(context, JourneyDetailActivity.class);
+    intent.putExtra(AppConstants.EXTRA_JOURNEY_ID, journeyId);
+    context.startActivity(intent);
   }
 }
