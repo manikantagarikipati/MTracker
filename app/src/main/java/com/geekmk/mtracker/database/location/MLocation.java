@@ -3,8 +3,11 @@ package com.geekmk.mtracker.database.location;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverters;
 import com.geekmk.mtracker.database.DataBaseConstants;
 import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
+import com.geekmk.mtracker.helper.DateTypeConverters;
+import java.util.Date;
 
 
 /**
@@ -12,6 +15,7 @@ import com.geekmk.mtracker.database.DataBaseConstants.LocationColumn;
  */
 
 @Entity(tableName = DataBaseConstants.TABLE_LOCATION)
+@TypeConverters({DateTypeConverters.class})
 public class MLocation {
 
   @PrimaryKey(autoGenerate = true)
@@ -26,8 +30,16 @@ public class MLocation {
   @ColumnInfo(name = LocationColumn.LONGITUDE)
   private double longitude;
 
+  public Date getTime() {
+    return time;
+  }
+
+  public void setTime(Date time) {
+    this.time = time;
+  }
+
   @ColumnInfo(name = LocationColumn.TIME_STAMP)
-  private long time;
+  private Date time;
 
   @ColumnInfo(name = LocationColumn.PLACE_INFO)
   private String placeInfo;
@@ -59,13 +71,6 @@ public class MLocation {
     this.longitude = longitude;
   }
 
-  public long getTime() {
-    return time;
-  }
-
-  public void setTime(long time) {
-    this.time = time;
-  }
 
   public String getPlaceInfo() {
     return placeInfo;

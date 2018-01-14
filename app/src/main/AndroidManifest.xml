@@ -51,6 +51,10 @@
       </intent-filter>
     </receiver>
 
+    <service
+      android:name=".base.FetchAddressIntentService"
+      android:exported="false" />
+
     <activity
       android:label="@string/title_activity_journey_list"
       android:name=".journey.JourneyListActivity"
@@ -58,7 +62,7 @@
     <activity
       android:label="@string/title_activity_journey_detail"
       android:name=".journeydetail.JourneyDetailActivity"
-      android:theme="@style/AppTheme.NoActionBar"></activity>
+      android:theme="@style/AppTheme.NoActionBar" />
   </application>
 
 </manifest>

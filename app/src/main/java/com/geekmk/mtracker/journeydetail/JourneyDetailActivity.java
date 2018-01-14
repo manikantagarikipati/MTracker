@@ -16,6 +16,7 @@ import com.geekmk.mtracker.helper.MapUtils;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Marker;
 import java.util.List;
 
 public class JourneyDetailActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -48,11 +49,14 @@ public class JourneyDetailActivity extends AppCompatActivity implements OnMapRea
               if (CollectionUtils.isNotEmpty(mLocations)) {
                 MLocation startLocation = mLocations.get(0);
                 MLocation endLocation = mLocations.get(mLocations.size() - 1);
-                MapUtils
+                Marker startMarker = MapUtils
                     .addMarker(startLocation.getLatitude(), startLocation.getLongitude(), googleMap,
-                        "");
-                MapUtils.addMarker(endLocation.getLatitude(), endLocation.getLongitude(), googleMap,
-                    "");
+                        startLocation.getTime() + "");
+                startMarker.showInfoWindow();
+                Marker endMarker = MapUtils
+                    .addMarker(endLocation.getLatitude(), endLocation.getLongitude(), googleMap,
+                        endLocation.getTime() + "");
+                endMarker.showInfoWindow();
                 MapUtils.displayPathInfo(googleMap, mLocations,
                     ContextCompat.getColor(JourneyDetailActivity.this, R.color.polylinecolor));
               }

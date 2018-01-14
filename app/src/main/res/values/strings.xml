@@ -18,5 +18,7 @@
   <string name="title_activity_journey_detail">Details</string>
   <string name="msg_cannot_identify_loc">Cannot identify current location</string>
   <string name="msg_journey_completed">Journey Completed</string>
+  <string name="msg_frm_loc">From Location:\n%1$s  </string>
+  <string name="msg_to_loc">To Location:\n%1$s  </string>
 
 </resources>

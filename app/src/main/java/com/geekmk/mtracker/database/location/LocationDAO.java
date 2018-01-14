@@ -23,6 +23,10 @@ public interface LocationDAO {
       + LocationColumn.JOURNEY_ID + " = :journeyId")
   LiveData<List<MLocation>> fetchLocationForJourney(long journeyId);
 
+  @Query("SELECT * FROM " + DataBaseConstants.TABLE_LOCATION + " WHERE "
+      + LocationColumn.JOURNEY_ID + " = :journeyId")
+  List<MLocation> fetchLocation(long journeyId);
+
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insertLocation(MLocation location);
 

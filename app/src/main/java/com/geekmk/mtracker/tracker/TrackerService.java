@@ -64,7 +64,7 @@ public class TrackerService extends LifecycleService {
         mLocation
             .setJourneyId(AppPreferences.getCurrentJourneyId(getApplication().getBaseContext()));
         mLocation.setBatteryLevel((float) info.get("power"));
-        mLocation.setTime((Long) info.get("time"));
+        mLocation.setTime((Date) info.get("time"));
         mLocation.setLatitude((Double) info.get("lat"));
         mLocation.setLongitude((Double) info.get("lng"));
 
@@ -114,7 +114,7 @@ public class TrackerService extends LifecycleService {
       Map<String, Object> trackStatus = new HashMap<>();
       trackStatus.put("lat", location.getLatitude());
       trackStatus.put("lng", location.getLongitude());
-      trackStatus.put("time", new Date().getTime());
+      trackStatus.put("time", new Date());
       trackStatus.put("power", AppUtils.getBatteryLevel(TrackerService.this));
 
       if (AppUtils.locationIsAtStatus(location, 1, mTrackingStatus)

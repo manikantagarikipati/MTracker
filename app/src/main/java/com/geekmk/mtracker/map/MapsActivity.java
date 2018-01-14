@@ -1,7 +1,6 @@
 package com.geekmk.mtracker.map;
 
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
@@ -26,6 +25,7 @@ import com.geekmk.mtracker.base.MRepo;
 import com.geekmk.mtracker.database.journey.JourneyFetchCB;
 import com.geekmk.mtracker.database.journey.JourneyInsertCB;
 import com.geekmk.mtracker.database.journey.MJourney;
+import com.geekmk.mtracker.database.location.LocationFetchCB;
 import com.geekmk.mtracker.database.location.MLocation;
 import com.geekmk.mtracker.helper.AppConstants.JourneyStatus;
 import com.geekmk.mtracker.helper.AppPreferences;
@@ -33,7 +33,6 @@ import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.helper.CollectionUtils;
 import com.geekmk.mtracker.helper.MapUtils;
 import com.geekmk.mtracker.journey.JourneyListActivity;
-import com.geekmk.mtracker.journeydetail.JourneyLocationViewModel;
 import com.geekmk.mtracker.tracker.TrackerService;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -86,43 +85,45 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
   }
 
   private void displayCurrentJourneyPath() {
-    if ((AppPreferences.getCurrentJourneyId(this) != 0) &&
-        !AppUtils.isServiceRunning(TrackerService.class, this)) {
-      startService(new Intent(MapsActivity.this, TrackerService.class));
-      if (mSwitch != null) {
-        mSwitch.setChecked(true);
+    if ((AppPreferences.getCurrentJourneyId(this) != 0)) {
+      if (!AppUtils.isServiceRunning(TrackerService.class, this)) {
+        startService(new Intent(MapsActivity.this, TrackerService.class));
+        if (mSwitch != null) {
+          mSwitch.setChecked(true);
+        }
       }
-      JourneyLocationViewModel journeyListViewModel = ViewModelProviders.of(this)
-          .get(JourneyLocationViewModel.class);
-      journeyListViewModel.getLocationsForJourney(AppPreferences.getCurrentJourneyId(this))
-          .observe(this,
-              new Observer<List<MLocation>>() {
-                @Override
-                public void onChanged(@Nullable List<MLocation> mLocations) {
-                  if (CollectionUtils.isNotEmpty(mLocations)) {
-                    MLocation startLocation = mLocations.get(0);
-                    if (mCurrLocationMarker != null) {
-                      mCurrLocationMarker.remove();
-                    }
-                    mCurrLocationMarker = MapUtils
-                        .addMarker(startLocation.getLatitude(), startLocation.getLongitude(), mMap,
-                            "");
-                    if (polyline != null) {
-                      MapUtils.displayExistingPathInfo(
-                          mLocations,
-                          ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor),
-                          polyline);
-                    } else {
-                      polyline = MapUtils.displayPathInfo(mMap, mLocations,
-                          ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor));
-                    }
 
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(startLocation.getLatitude(), startLocation.getLongitude()), 11));
+      MRepo.getLocationsForJourney(AppPreferences.getCurrentJourneyId(this), new LocationFetchCB() {
+        @Override
+        public void onLocationLoaded(List<MLocation> mLocations) {
+          if (CollectionUtils.isNotEmpty(mLocations)) {
+            MLocation startLocation = mLocations.get(0);
+            if (mCurrLocationMarker != null) {
+              mCurrLocationMarker.remove();
+            }
+            mCurrLocationMarker = MapUtils
+                .addMarker(startLocation.getLatitude(), startLocation.getLongitude(), mMap,
+                    "");
+//            if (polyline != null) {
+//              MapUtils.displayExistingPathInfo(
+//                  mLocations,
+//                  ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor),
+//                  polyline);
+//            } else {
+            polyline = MapUtils.displayPathInfo(mMap, mLocations,
+                ContextCompat.getColor(MapsActivity.this, R.color.polylinecolor));
+//            }
 
-                  }
-                }
-              });
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(startLocation.getLatitude(), startLocation.getLongitude()), 11));
+
+          }
+        }
+
+        @Override
+        public void onLocationEmpty() {
+        }
+      });
     }
   }
 
@@ -215,12 +216,15 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       public void onJourneyLoaded(MJourney journey) {
         if (latLng != null) {
           journey.setEndLatLng(AppUtils.buildLatLngString(latLng));
-          journey.setEndTime(Calendar.getInstance().getTime().getTime());
+          journey.setEndTime(Calendar.getInstance().getTime());
           journey.setStatus(JourneyStatus.COMPLETED);
           MRepo.addJourney(journey, null);
           List<LatLng> points = polyline.getPoints();
           points.clear();
           polyline.setPoints(points);
+          AppUtils
+              .geoCode(MapsActivity.this, journey.getJourneyId(), latLng.latitude, latLng.longitude,
+                  false);
           AppUtils.showToast(MapsActivity.this, R.string.msg_journey_completed);
           AppUtils.displayJourneyDetail(MapsActivity.this, journey.getJourneyId());
         }
@@ -254,13 +258,15 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       }
       MJourney mJourney = new MJourney();
       mJourney.setStartLatLng(AppUtils.buildLatLngString(mCurrLocationMarker.getPosition()));
-      mJourney.setStartTime(Calendar.getInstance().getTime().getTime());
+      mJourney.setStartTime(Calendar.getInstance().getTime());
       mJourney.setStatus(JourneyStatus.ONGOING);
       MRepo.addJourney(mJourney, new JourneyInsertCB() {
         @Override
         public void onInsertSuccess(long id) {
           AppPreferences.setJourneyId(id, MapsActivity.this);
           startService(new Intent(MapsActivity.this, TrackerService.class));
+          LatLng location = mCurrLocationMarker.getPosition();
+          AppUtils.geoCode(MapsActivity.this, id, location.latitude, location.longitude, true);
         }
 
         @Override

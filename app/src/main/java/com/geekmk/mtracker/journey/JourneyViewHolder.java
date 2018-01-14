@@ -2,6 +2,7 @@ package com.geekmk.mtracker.journey;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -52,9 +53,21 @@ public class JourneyViewHolder extends BaseViewHolder<JourneyViewIdentifier> imp
           context.getResources().getDisplayMetrics().widthPixels, height.intValue());
       Picasso.with(context).load(imageURL).fit().centerCrop().into(ivStaticMap);
     }
+    String fromLoc;
 
-    fromLocation.setText(journey.getStartLatLng());
-    toLocation.setText(journey.getEndLatLng());
+    if (!TextUtils.isEmpty(journey.getStartPlaceName())) {
+      fromLoc = context.getString(R.string.msg_frm_loc, journey.getStartPlaceName());
+    } else {
+      fromLoc = context.getString(R.string.msg_frm_loc, journey.getStartLatLng());
+    }
+    fromLocation.setText(fromLoc);
+    String toLoc;
+    if (!TextUtils.isEmpty(journey.getEndPlaceName())) {
+      toLoc = context.getString(R.string.msg_to_loc, journey.getEndPlaceName());
+    } else {
+      toLoc = context.getString(R.string.msg_to_loc, journey.getEndLatLng());
+    }
+    toLocation.setText(toLoc);
   }
 
   @Override

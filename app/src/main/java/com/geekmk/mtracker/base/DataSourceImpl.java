@@ -5,6 +5,8 @@ import com.geekmk.mtracker.database.AppDatabase;
 import com.geekmk.mtracker.database.journey.JourneyDAO;
 import com.geekmk.mtracker.database.journey.MJourney;
 import com.geekmk.mtracker.database.location.LocationDAO;
+import com.geekmk.mtracker.database.location.MLocation;
+import java.util.List;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
@@ -43,5 +45,10 @@ public class DataSourceImpl implements DataSourceInf {
   @Override
   public long saveJourney(MJourney mJourney) {
     return journeyDAO.insertJourney(mJourney);
+  }
+
+  @Override
+  public List<MLocation> fetchLocations(long currentJourneyId) {
+    return locationDAO.fetchLocation(currentJourneyId);
   }
 }

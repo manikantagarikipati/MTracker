@@ -8,6 +8,7 @@ import android.location.Location;
 import android.os.BatteryManager;
 import android.util.Log;
 import android.widget.Toast;
+import com.geekmk.mtracker.base.FetchAddressIntentService;
 import com.geekmk.mtracker.journeydetail.JourneyDetailActivity;
 import com.google.android.gms.maps.model.LatLng;
 import java.util.LinkedList;
@@ -96,5 +97,15 @@ public class AppUtils {
     Intent intent = new Intent(context, JourneyDetailActivity.class);
     intent.putExtra(AppConstants.EXTRA_JOURNEY_ID, journeyId);
     context.startActivity(intent);
+  }
+
+  public static void geoCode(Context context, long journeyId, double lat, double lng,
+      boolean isStart) {
+    Intent intent = new Intent(context, FetchAddressIntentService.class);
+    intent.putExtra(FetchAddressIntentService.IS_START, isStart);
+    intent.putExtra(FetchAddressIntentService.JOURNEY_ID, journeyId);
+    intent.putExtra(FetchAddressIntentService.EXTRA_LATITUDE, lat);
+    intent.putExtra(FetchAddressIntentService.EXTRA_LONGITUDE, lng);
+    context.startService(intent);
   }
 }

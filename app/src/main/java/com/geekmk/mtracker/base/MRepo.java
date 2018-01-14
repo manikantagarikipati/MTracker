@@ -4,6 +4,10 @@ import android.content.Context;
 import com.geekmk.mtracker.database.journey.JourneyFetchCB;
 import com.geekmk.mtracker.database.journey.JourneyInsertCB;
 import com.geekmk.mtracker.database.journey.MJourney;
+import com.geekmk.mtracker.database.location.LocationFetchCB;
+import com.geekmk.mtracker.database.location.MLocation;
+import com.geekmk.mtracker.helper.CollectionUtils;
+import java.util.List;
 
 /**
  * Created by manikanta.garikipati on 14/01/18.
@@ -75,4 +79,26 @@ public final class MRepo {
     });
   }
 
+  public static void getLocationsForJourney(final long currentJourneyId,
+      final LocationFetchCB locationFetchCB) {
+    INSTANCE.appExecutors.diskIO().execute(new Runnable() {
+      @Override
+      public void run() {
+        final List<MLocation> locations = INSTANCE.dataSource.fetchLocations(currentJourneyId);
+
+        INSTANCE.appExecutors.mainThread().execute(new Runnable() {
+          @Override
+          public void run() {
+            if (locationFetchCB != null) {
+              if (CollectionUtils.isNotEmpty(locations)) {
+                locationFetchCB.onLocationLoaded(locations);
+              } else {
+                locationFetchCB.onLocationEmpty();
+              }
+            }
+          }
+        });
+      }
+    });
+  }
 }
