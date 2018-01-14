@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.geekmk.mtracker.R;
 import com.geekmk.mtracker.database.journey.MJourney;
 import com.geekmk.mtracker.helper.AppConstants;
+import com.geekmk.mtracker.helper.AppConstants.JourneyStatus;
 import com.geekmk.mtracker.helper.AppUtils;
 import com.geekmk.mtracker.helper.MapUtils;
 import com.geekmk.mtracker.journeydetail.JourneyDetailActivity;
@@ -65,7 +66,11 @@ public class JourneyViewHolder extends BaseViewHolder<JourneyViewIdentifier> imp
     if (!TextUtils.isEmpty(journey.getEndPlaceName())) {
       toLoc = context.getString(R.string.msg_to_loc, journey.getEndPlaceName());
     } else {
-      toLoc = context.getString(R.string.msg_to_loc, journey.getEndLatLng());
+      if (journey.getStatus() != JourneyStatus.ONGOING) {
+        toLoc = context.getString(R.string.msg_to_loc, journey.getEndLatLng());
+      } else {
+        toLoc = context.getString(R.string.msg_to_loc, "Ongoing");
+      }
     }
     toLocation.setText(toLoc);
   }

@@ -66,7 +66,6 @@ public class LocationLiveData extends LiveData<Location> implements
     request.setInterval(AppConstants.LOCATION_REQUEST_INTERVAL);
     request.setFastestInterval(AppConstants.LOCATION_REQUEST_INTERVAL_FASTEST);
     request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
     if (lastLocation != null) {
       setValue(lastLocation);
     }

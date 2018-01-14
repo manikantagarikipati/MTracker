@@ -9,6 +9,6 @@
   <item
     android:id="@+id/menu_journey_list"
     android:title="@string/title_activity_journey_list"
-    android:icon="@drawable/ic_view_list_white_48dp"
+    android:icon="@drawable/ic_view_list_white_48px"
     app:showAsAction="always" />
 </menu>
