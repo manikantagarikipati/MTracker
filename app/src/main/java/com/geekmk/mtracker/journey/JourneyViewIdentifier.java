@@ -11,6 +11,9 @@ public class JourneyViewIdentifier implements ViewIdentifier {
 
   private MJourney mJourney;
 
+  public JourneyViewIdentifier(MJourney mJourney) {
+    this.mJourney = mJourney;
+  }
   public MJourney getmJourney() {
     return mJourney;
   }

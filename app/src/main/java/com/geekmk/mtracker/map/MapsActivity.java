@@ -18,15 +18,13 @@ import com.geekmk.mtracker.base.BaseMapActivity;
 import com.geekmk.mtracker.base.BaseMapActivity.MapPermissionsProvidedCB;
 import com.geekmk.mtracker.helper.AppPreferences;
 import com.geekmk.mtracker.helper.AppUtils;
+import com.geekmk.mtracker.helper.MapUtils;
 import com.geekmk.mtracker.tracker.TrackerService;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.List;
@@ -38,7 +36,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
   private Marker mCurrLocationMarker;
   private Polyline polyline;
-
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +76,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
 
 
   private void displayCurrentLocationMarker(Location location) {
-
     if (AppPreferences.getCurrentJourneyId(MapsActivity.this) != 0) {
       //this is a journey marker location hence just mark it as a dot etc.. as a path
       addLocationToPolyLine(location);
@@ -87,7 +83,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       if (mCurrLocationMarker != null) {
         mCurrLocationMarker.remove();
       }
-      mCurrLocationMarker = addMarker(location, "You!!");
+      mCurrLocationMarker = MapUtils.addMarker(location, "You!!", mMap);
     }
   }
 
@@ -96,7 +92,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       PolylineOptions polylineOptions = new PolylineOptions();
       polylineOptions.add(new LatLng(location.getLatitude(), location.getLongitude()));
       polylineOptions.width(18);
-
       polylineOptions.color(ContextCompat.getColor(this, R.color.polylinecolor));
       polyline = mMap.addPolyline(polylineOptions);
     } else {
@@ -173,7 +168,7 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
       Location location = new Location("");
       location.setLatitude(latLng.latitude);
       location.setLongitude(latLng.longitude);
-      addMarker(location, "");
+      MapUtils.addMarker(location, "", mMap);
     }
   }
 
@@ -181,19 +176,6 @@ public class MapsActivity extends BaseMapActivity implements OnMapReadyCallback,
     if (AppUtils.isServiceRunning(TrackerService.class, this) && mSwitch != null) {
       mSwitch.setChecked(true);
     }
-  }
-
-  private Marker addMarker(Location location, String title) {
-    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-    MarkerOptions markerOptions = new MarkerOptions();
-    markerOptions.position(latLng);
-    markerOptions.title(title);
-    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-    Marker marker = mMap.addMarker(markerOptions);
-    //move map camera
-    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11));
-
-    return marker;
   }
 
 }

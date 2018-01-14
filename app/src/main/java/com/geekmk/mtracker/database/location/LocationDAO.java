@@ -1,5 +1,6 @@
 package com.geekmk.mtracker.database.location;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
@@ -20,10 +21,9 @@ public interface LocationDAO {
 
   @Query("SELECT * FROM " + DataBaseConstants.TABLE_LOCATION + " WHERE "
       + LocationColumn.JOURNEY_ID + " = :journeyId")
-  List<MLocation> fetchLocationForJourney(int journeyId);
+  LiveData<List<MLocation>> fetchLocationForJourney(long journeyId);
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   void insertLocation(MLocation location);
-
 
 }

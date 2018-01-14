@@ -26,7 +26,7 @@ public class LocationLiveData extends LiveData<Location> implements
 
   private static LocationLiveData instance;
 
-  public static LocationLiveData getInstance(Context appContext) {
+  public static synchronized LocationLiveData getInstance(Context appContext) {
     if (instance == null) {
       instance = new LocationLiveData(appContext);
     }
